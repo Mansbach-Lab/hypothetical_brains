@@ -6,54 +6,31 @@ Created on Wed Apr 12 13:29:57 2023
 @author: lwright
 """
 
-#import sys
-#sys.path.append('../')
-#import c2m2_new as ccm
-#import mvcomp
-# import os
-# import glob
 from os.path import join
-# from os.path import basename
-# import matplotlib.pyplot as plt
 import numpy as np
 import nibabel as nb
-# import math
-# import importlib
-# import matplotlib.patches as patches
-print("yup")
-#import seaborn as sns
-import pandas as pd
-# from matplotlib.colors import LogNorm, Normalize
-# import subprocess as subproc
 import networkx as nx
-# import graph_tool.all as gt
-# import cupy as cp
 from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import pdist, squareform
-from scipy.sparse import csr_matrix, csr_array
+from scipy.sparse import csr_matrix, csr_array, lil_matrix
 from scipy.spatial import cKDTree
 # from sklearn.metrics import pairwise_distances
 import time
 
-print("start")
 # Make features array in whole WM mask (voxels to be compared) in a test subject
 feature_number = 7
+samples = 20
+filter_threshold = 0.3
 
 # Load data of each feature within WM mask
 features_dir = '/home/lwright/Desktop/TrialData/'
 
-samples = 20
-filter_threshold = 0.3
 stringname = 'brain_july26_'
 
-
-save_matrix_as = join('brain_may17_'+str(samples)+'.npy')
-save_graph_as = join('brain_may17_'+str(samples)+'.gexf')
+save_matrix_as = join(stringname+str(samples)+'.npy')
+save_graph_as = join(stringname+str(samples)+'.gexf')
 save_features_as = join(stringname+'features'+str(samples)+'.csv')
-
-
 WM_mask = nb.load(join(features_dir, 'WM_mask_'+str(samples)+'.nii')).get_fdata().astype('bool')
-
 AD = nb.load(join(features_dir, 'AD_'+str(samples)+'.nii')).get_fdata()
 FA = nb.load(join(features_dir, 'FA_'+str(samples)+'.nii')).get_fdata()
 MD = nb.load(join(features_dir, 'MD_'+str(samples)+'.nii')).get_fdata()
@@ -70,8 +47,6 @@ ICVF_WM = ICVF[WM_mask]
 OD_WM = OD[WM_mask]
 ISOVF_WM = ISOVF[WM_mask]
 
-column_labels = ['AD_WM', 'FA_WM', 'MD_WM', 'RD_WM', 
-                                          'ICVF_WM', 'OD_WM', 'ISOVF_WM']
 voxel_number = AD_WM.shape[0]
 
 # Make array containing all features (voxels in WM X features)
@@ -86,42 +61,35 @@ feature_mat[:,4] = ICVF_WM
 feature_mat[:,5] = OD_WM
 feature_mat[:,6] = ISOVF_WM
 
-# df = pd.DataFrame(feature_mat, columns = column_labels)
-# print(feature_mat.shape)
-# voxels_howmany = len(df.iloc[:,0])
-
-
-# AD_WM_df = pd.DataFrame(AD_WM_row)
-# AD_WM_corrmat = AD_WM_df.corr()
-
-# brain = nx.Graph()
-    
-# for i in range(len(feature_mat)):
-#     brain.add_node(i, AD_WM=feature_mat[i,0], FA_WM=feature_mat[i,1], MD_WM=feature_mat[i,2], RD_WM=feature_mat[i,3],
-#                 ICVF_WM=feature_mat[i,4], OD_WM=feature_mat[i,5], ISOVF_WM=feature_mat[i,6])
-print("here")    
 start = time.time()
+
+# scaling the MRI feature data
 scaler = StandardScaler()
 scaler.fit(feature_mat)
 feature_mat_scaled = scaler.transform(feature_mat)
 
-
 print("time 1: ", (time.time() - start))
 
 labeled_matrix = np.zeros((AD_WM.shape[0]+1,feature_number))
-labeled_matrix[0,:] = np.arange(0,7,1)
+labeled_matrix[0,:] = np.arange(0,feature_number,1)
 labeled_matrix[1::,:] = feature_mat_scaled
 
 np.savetxt(save_features_as,labeled_matrix, delimiter=",")
 
-# np.savetxt("AD_WM.csv",labeled_matrix[:,0], delimiter=",")
-# np.savetxt("FA_WM.csv",labeled_matrix[:,1], delimiter=",")
-# np.savetxt("MD_WM.csv",labeled_matrix[:,2], delimiter=",")
-# np.savetxt("RD_WM.csv",labeled_matrix[:,3], delimiter=",")
-# np.savetxt("ICVF_WM.csv",labeled_matrix[:,4], delimiter=",")
-# np.savetxt("OD_WM.csv",labeled_matrix[:,5], delimiter=",")
-# np.savetxt("ISOVF_WM.csv",labeled_matrix[:,6], delimiter=",")
 print("Attributes saved")
+
+
+width = 1.0
+distance_threshold = 10 # for ckdtree only
+myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
+
+# method 1 for sparse matrix; does distance only, cannot make weights
+kd_tree1 = cKDTree(feature_mat_scaled)
+kd_tree2 = cKDTree(feature_mat_scaled)
+ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
+# ckdtree_weight = np.exp(-1.*ckdtree_distance/width)
+# ckdtree_weight_pruned = myfunc(ckdtree_weight)
+
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html
 # or cdist?
@@ -131,88 +99,44 @@ print("Attributes saved")
 distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
 print("time 2: ", (time.time() - start))
 
-width = 1.0
 weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
 print("time 3: ", (time.time() - start))
 
 # pruning edges less than filter_threshold
-
-myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
 filtered_weights = myfunc(weight_matrix_flat)
-# filtered_weights = weight_matrix_flat[mask_filtering]
 
-print("voxels: ", voxel_number)
+# collecting data; two different approaches lil_matrix or for direct to CSR
+weights_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
 row_idx, col_idx = [],[]
 
+count = 0
 for row in range(voxel_number-1):
     for col in range(row+1, voxel_number):
         row_idx.append(row)
         col_idx.append(col)
-        # print(row, ", ", col)
+        weights_sparse_lil[row, col] = filtered_weights[count]
+        count += 1
 print("exit loop")
-rows = np.array(row_idx)
-columns = np.array(col_idx)
-print(rows.shape)
-print(columns.shape)
-print(filtered_weights.shape)
-distances_sparse = csr_array((filtered_weights, (row_idx, col_idx)), shape=(voxel_number, voxel_number)) 
 
-distance_matrix_square_sparse = distances_sparse.toarray()
-distance_matrix_square = squareform(filtered_weights)
-
-# zeroed_weights = np.ma.MaskedArray(weight_matrix_flat, mask_filtering, fill_value = np.nan)
-# zeroed_weights.filled()
-
-# distance_matrix_square = squareform(zeroed_weights)
+# method 2 for making sparse array of weights - think this is best
+weights_sparse_csr = weights_sparse_lil.tocsr()
 
 print("time 4: ", (time.time() - start))
 
+# method 3 for making sparse array of weights - seems memory-heavy
+rows = np.array(row_idx)
+columns = np.array(col_idx)
+distances_sparse = csr_array((filtered_weights, (row_idx, col_idx)), shape=(voxel_number, voxel_number)) 
+
+print("time 5: ", (time.time() - start))
+
+# method 4 this bit takes too much memory for higher orders
+distance_matrix_square = squareform(filtered_weights)
+
+print("time 6: ", (time.time() - start))
+
 np.save(save_matrix_as,distance_matrix_square)
+brain = nx.from_numpy_matrix(distance_matrix_square)
+nx.write_gexf(brain, save_graph_as)
 
-brain2 = nx.from_numpy_matrix(distance_matrix_square)
-
-nx.write_gexf(brain2, save_graph_as)
-print("time 5: ", (time.time() - start))
-
-
-"""
-
-print("Nodes: ", len(brain.nodes())) 
-print("Edges: ", len(brain.edges())) 
-    
-brain2 = nx.from_numpy_matrix(distance_matrix_square)
-
-nx.write_gexf(brain2, "brain2.gexf")
-print("time 5: ", (time.time() - start))
-
-
-# maybe_matrix = nx.adjacency_matrix(brain)
-# brain2 = nx.from_numpy_matrix(maybe_matrix)
-
-print("Nodes: ", len(brain2.nodes())) 
-print("Edges: ", len(brain2.edges())) 
-
-# brain3 = nx.complete_graph(brain)
-
-# print("Nodes: ", len(brain3.nodes())) 
-# print("Edges: ", len(brain3.edges())) 
-
-# gtbrain = gt.Graph(directed=False)
-
-# nx.write_gexf(brain, "brain.gexf")
-
-need to make parallel graphs, make correlation matricies, sum them to make edges
-
-# for i in range(voxels_howmany):
-#     for j in np.arange(i,voxels_howmany+1,1):
-#         name = 'corr_matrix' + str(i)
-#         correlation_matrix = df.iloc[i,1:].corr()
-
-# brain2 = nx.from_numpy_matrix(adjacency_matrix)
-
-
-print("Nodes: ", len(brain.nodes())) 
-
-nx.write_gexf(brain, "brain.gexf")
-
-"""
+print("done")
