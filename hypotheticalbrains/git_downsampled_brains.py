@@ -20,18 +20,22 @@ import nibabel as nb
 # import math
 # import importlib
 # import matplotlib.patches as patches
-
+print("yup")
 #import seaborn as sns
 import pandas as pd
 # from matplotlib.colors import LogNorm, Normalize
 # import subprocess as subproc
 import networkx as nx
-import graph_tool.all as gt
+# import graph_tool.all as gt
 # import cupy as cp
 from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import pdist, squareform
+from scipy.sparse import csr_matrix, csr_array
+from scipy.spatial import cKDTree
+# from sklearn.metrics import pairwise_distances
 import time
 
+print("start")
 # Make features array in whole WM mask (voxels to be compared) in a test subject
 feature_number = 7
 
@@ -40,7 +44,7 @@ features_dir = '/home/lwright/Desktop/TrialData/'
 
 samples = 20
 filter_threshold = 0.3
-stringname = 'brain_june07_'
+stringname = 'brain_july26_'
 
 
 save_matrix_as = join('brain_may17_'+str(samples)+'.npy')
@@ -68,9 +72,10 @@ ISOVF_WM = ISOVF[WM_mask]
 
 column_labels = ['AD_WM', 'FA_WM', 'MD_WM', 'RD_WM', 
                                           'ICVF_WM', 'OD_WM', 'ISOVF_WM']
+voxel_number = AD_WM.shape[0]
 
-# Make array containing all features (voxels in WM X 10 features)
-feature_mat = np.zeros((AD_WM.shape[0],feature_number))
+# Make array containing all features (voxels in WM X features)
+feature_mat = np.zeros((voxel_number,feature_number))
 
 # Replace zeros in each column by the data of one of the metrics 
 feature_mat[:,0] = AD_WM
@@ -81,12 +86,9 @@ feature_mat[:,4] = ICVF_WM
 feature_mat[:,5] = OD_WM
 feature_mat[:,6] = ISOVF_WM
 
-
-
-
-df = pd.DataFrame(feature_mat, columns = column_labels)
-print(feature_mat.shape)
-voxels_howmany = len(df.iloc[:,0])
+# df = pd.DataFrame(feature_mat, columns = column_labels)
+# print(feature_mat.shape)
+# voxels_howmany = len(df.iloc[:,0])
 
 
 # AD_WM_df = pd.DataFrame(AD_WM_row)
@@ -97,7 +99,7 @@ voxels_howmany = len(df.iloc[:,0])
 # for i in range(len(feature_mat)):
 #     brain.add_node(i, AD_WM=feature_mat[i,0], FA_WM=feature_mat[i,1], MD_WM=feature_mat[i,2], RD_WM=feature_mat[i,3],
 #                 ICVF_WM=feature_mat[i,4], OD_WM=feature_mat[i,5], ISOVF_WM=feature_mat[i,6])
-    
+print("here")    
 start = time.time()
 scaler = StandardScaler()
 scaler.fit(feature_mat)
@@ -121,18 +123,41 @@ np.savetxt(save_features_as,labeled_matrix, delimiter=",")
 # np.savetxt("ISOVF_WM.csv",labeled_matrix[:,6], delimiter=",")
 print("Attributes saved")
 
-distance_matrix_flat = pdist(feature_mat_scaled)
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html
+# or cdist?
+# can consolidate steps into Y = pdist(X, f) where f is user defined function.
+# Computes the distance between all pairs of vectors in X using the user supplied 2-arity function f. 
+
+distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
 print("time 2: ", (time.time() - start))
 
-weight_matrix_flat = np.exp(-1.*distance_matrix_flat)
+width = 1.0
+weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
 print("time 3: ", (time.time() - start))
 
-# mask_filtering = weight_matrix_flat > filter_threshold
+# pruning edges less than filter_threshold
 
 myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
 filtered_weights = myfunc(weight_matrix_flat)
 # filtered_weights = weight_matrix_flat[mask_filtering]
 
+print("voxels: ", voxel_number)
+row_idx, col_idx = [],[]
+
+for row in range(voxel_number-1):
+    for col in range(row+1, voxel_number):
+        row_idx.append(row)
+        col_idx.append(col)
+        # print(row, ", ", col)
+print("exit loop")
+rows = np.array(row_idx)
+columns = np.array(col_idx)
+print(rows.shape)
+print(columns.shape)
+print(filtered_weights.shape)
+distances_sparse = csr_array((filtered_weights, (row_idx, col_idx)), shape=(voxel_number, voxel_number)) 
+
+distance_matrix_square_sparse = distances_sparse.toarray()
 distance_matrix_square = squareform(filtered_weights)
 
 # zeroed_weights = np.ma.MaskedArray(weight_matrix_flat, mask_filtering, fill_value = np.nan)

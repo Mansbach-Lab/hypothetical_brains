@@ -34,6 +34,7 @@ import_data_from = join('/home/lwright/anaconda3/envs/networktoy/'
 data = np.loadtxt(import_data_from, delimiter=',')
 data = data[1::,:]
 
+
 # data = np.loadtxt('/home/lwright/anaconda3/envs/networktoy/brain_june27_features65.csv', delimiter=',')
 
 # automated save file titles
@@ -54,8 +55,9 @@ embedding.shape
 time1 = time.perf_counter() - start_time
 print("time 1: ", (time.perf_counter() - start_time))
 
-clustering_object = AgglomerativeClustering(linkage="ward", 
-                                                    n_clusters=cluster_count)
+clustering_object = AgglomerativeClustering(metric = "precomputed",
+                                                    n_clusters=cluster_count,
+                                                    linkage="ward")
 time2 = time.perf_counter() - time1
 print("time 2: ", (time.perf_counter() - time1 - start_time))
 
