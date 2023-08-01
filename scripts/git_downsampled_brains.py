@@ -146,7 +146,7 @@ print("time 5: ", (time.time() - start))
 # method 4 this bit takes too much memory for higher orders
 def squareform_made_matrix(feature_mat_scaled, width):
     distance_matrix_square = squareform(myfunc(np.exp(-1.*pdist(feature_mat_scaled, 'sqeuclidean')/width)))
-    return distance_matrix_square
+    return csr_matrix(distance_matrix_square)
 
 print("time 6: ", (time.time() - start))
 
