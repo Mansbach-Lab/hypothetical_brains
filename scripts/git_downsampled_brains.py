@@ -80,58 +80,73 @@ print("Attributes saved")
 
 
 width = 1.0
-distance_threshold = 10 # for ckdtree only
+distance_threshold = 1000 # for ckdtree only
 myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
 
-# method 1 for sparse matrix; does distance only, cannot make weights
+
+"""
 kd_tree1 = cKDTree(feature_mat_scaled)
 kd_tree2 = cKDTree(feature_mat_scaled)
 ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
-# ckdtree_weight = np.exp(-1.*ckdtree_distance/width)
-# ckdtree_weight_pruned = myfunc(ckdtree_weight)
-
+max_dist = 0
+for i in range(feature_number):
+    curr_dist = ckdtree_distance.max()
+    if curr_dist > max_dist:
+        max_dist = curr_dist
+print(max_dist)
+"""
+    
+def ckd_made_matrix(feature_mat_scaled, width, distance_threshold):
+    # method 1 for sparse matrix; does distance only, cannot make weights
+    kd_tree1 = cKDTree(feature_mat_scaled)
+    kd_tree2 = cKDTree(feature_mat_scaled)
+    ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
+    ckdtree_weight = ckdtree_distance.copy()
+    ckdtree_weight.data = np.exp(-1.*myfunc(ckdtree_distance.data)/width)
+    return ckdtree_weight
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html
 # or cdist?
 # can consolidate steps into Y = pdist(X, f) where f is user defined function.
 # Computes the distance between all pairs of vectors in X using the user supplied 2-arity function f. 
 
-distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
-print("time 2: ", (time.time() - start))
+def loop_made_matrix(feature_mat_scaled, width):
+    distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
+    weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
+    
+    # pruning edges less than filter_threshold
+    filtered_weights = myfunc(weight_matrix_flat)
 
-weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
-print("time 3: ", (time.time() - start))
-
-# pruning edges less than filter_threshold
-filtered_weights = myfunc(weight_matrix_flat)
-
-# collecting data; two different approaches lil_matrix or for direct to CSR
-weights_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
-row_idx, col_idx = [],[]
-
-count = 0
-for row in range(voxel_number-1):
-    for col in range(row+1, voxel_number):
-        row_idx.append(row)
-        col_idx.append(col)
-        weights_sparse_lil[row, col] = filtered_weights[count]
-        count += 1
-print("exit loop")
-
-# method 2 for making sparse array of weights - think this is best
-weights_sparse_csr = weights_sparse_lil.tocsr()
+    # collecting data; two different approaches lil_matrix or for direct to CSR
+    weights_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
+    # row_idx, col_idx = [],[]
+    
+    count = 0
+    for row in range(voxel_number-1):
+        for col in range(row+1, voxel_number):
+            # row_idx.append(row)
+            # col_idx.append(col)
+            weights_sparse_lil[row, col] = filtered_weights[count]
+            count += 1
+    print("exit loop")
+    
+    # method 2 for making sparse array of weights - think this is best
+    weights_sparse_csr = weights_sparse_lil.tocsr()
+    # method 3 for making sparse array of weights - seems memory-heavy
+    # rows = np.array(row_idx)
+    # columns = np.array(col_idx)
+    # distances_sparse = csr_array((filtered_weights, (row_idx, col_idx)), shape=(voxel_number, voxel_number)) 
+    return weights_sparse_csr
 
 print("time 4: ", (time.time() - start))
 
-# method 3 for making sparse array of weights - seems memory-heavy
-rows = np.array(row_idx)
-columns = np.array(col_idx)
-distances_sparse = csr_array((filtered_weights, (row_idx, col_idx)), shape=(voxel_number, voxel_number)) 
 
 print("time 5: ", (time.time() - start))
 
 # method 4 this bit takes too much memory for higher orders
-distance_matrix_square = squareform(filtered_weights)
+def squareform_made_matrix(feature_mat_scaled, width):
+    distance_matrix_square = squareform(myfunc(np.exp(-1.*pdist(feature_mat_scaled, 'sqeuclidean')/width)))
+    return distance_matrix_square
 
 print("time 6: ", (time.time() - start))
 
