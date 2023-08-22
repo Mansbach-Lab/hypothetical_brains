@@ -5,7 +5,6 @@ Created on Wed Apr 12 13:29:57 2023
 
 @author: lwright
 """
-__all__ = ['ckd_made_matrix', 'loop_made_matrix', 'squareform_made_matrix']
 
 
 
@@ -22,25 +21,38 @@ import time
 
 # Make features array in whole WM mask (voxels to be compared) in a test subject
 feature_number = 7
-samples = 20
+samples = 256
 filter_threshold = 0.3
 
 # Load data of each feature within WM mask
 features_dir = '/home/lwright/Desktop/TrialData/'
 
-stringname = 'brain_july26_'
+stringname = 'brain_aug17_'
 
 save_matrix_as = join(stringname+str(samples)+'.npy')
 save_graph_as = join(stringname+str(samples)+'.gexf')
 save_features_as = join(stringname+'features'+str(samples)+'.csv')
-WM_mask = nb.load(join(features_dir, 'WM_mask_'+str(samples)+'.nii')).get_fdata().astype('bool')
-AD = nb.load(join(features_dir, 'AD_'+str(samples)+'.nii')).get_fdata()
-FA = nb.load(join(features_dir, 'FA_'+str(samples)+'.nii')).get_fdata()
-MD = nb.load(join(features_dir, 'MD_'+str(samples)+'.nii')).get_fdata()
-RD = nb.load(join(features_dir, 'RD_'+str(samples)+'.nii')).get_fdata()
-ICVF = nb.load(join(features_dir, 'ICVF_'+str(samples)+'.nii')).get_fdata()
-OD = nb.load(join(features_dir, 'OD_'+str(samples)+'.nii')).get_fdata()
-ISOVF = nb.load(join(features_dir, 'ISOVF_'+str(samples)+'.nii')).get_fdata()
+# WM_mask = nb.load(join(features_dir, 'WM_mask_'+str(samples)+'.nii')).get_fdata().astype('bool')
+# AD = nb.load(join(features_dir, 'AD_'+str(samples)+'.nii')).get_fdata()
+# FA = nb.load(join(features_dir, 'FA_'+str(samples)+'.nii')).get_fdata()
+# MD = nb.load(join(features_dir, 'MD_'+str(samples)+'.nii')).get_fdata()
+# RD = nb.load(join(features_dir, 'RD_'+str(samples)+'.nii')).get_fdata()
+# ICVF = nb.load(join(features_dir, 'ICVF_'+str(samples)+'.nii')).get_fdata()
+# OD = nb.load(join(features_dir, 'OD_'+str(samples)+'.nii')).get_fdata()
+# ISOVF = nb.load(join(features_dir, 'ISOVF_'+str(samples)+'.nii')).get_fdata()
+
+
+AD = nb.load(join(features_dir,'sub-071_P_AD_WarpedToMNI.nii')).get_fdata()
+FA = nb.load(join(features_dir,'sub-071_P_FA_WarpedToMNI.nii')).get_fdata()
+MD = nb.load(join(features_dir,'sub-071_P_MD_WarpedToMNI.nii')).get_fdata()
+RD = nb.load(join(features_dir,'sub-071_P_RD_WarpedToMNI.nii')).get_fdata()
+ICVF = nb.load(join(features_dir,'sub-071_P_ICVF_WarpedToMNI.nii')).get_fdata()
+OD = nb.load(join(features_dir,'sub-071_P_OD_WarpedToMNI.nii')).get_fdata()
+ISOVF = nb.load(join(features_dir,'sub-071_P_ISOVF_WarpedToMNI.nii')).get_fdata()
+WM_mask = nb.load(join(features_dir,'Group_mean_CIRM_57_ACTION_5_MPRAGE0p9_T1w_brain_reg2DWI_0p9_T1_5tt_vol2_WM_WarpedToMNI_thr0p95_bin.nii')).get_fdata().astype('bool')
+
+
+
 
 AD_WM = AD[WM_mask]
 FA_WM = FA[WM_mask]
@@ -84,7 +96,6 @@ print("Attributes saved")
 
 width = 1.0
 distance_threshold = 1000 # for ckdtree only
-myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
 
 
 """
@@ -97,7 +108,7 @@ for i in range(feature_number):
     if curr_dist > max_dist:
         max_dist = curr_dist
 print(max_dist)
-"""
+
 def ckd_made_matrix(feature_mat_scaled, width, distance_threshold):
     # method 1 for sparse matrix; does distance only, cannot make weights
     kd_tree1 = cKDTree(feature_mat_scaled)
@@ -144,7 +155,7 @@ def loop_made_matrix(feature_mat_scaled, width):
 def squareform_made_matrix(feature_mat_scaled, width):
     distance_matrix_square = squareform(myfunc(np.exp(-1.*pdist(feature_mat_scaled, 'sqeuclidean')/width)))
     return csr_matrix(distance_matrix_square)
-
+"""
 
 """np.save(save_matrix_as,distance_matrix_square)
 brain = nx.from_numpy_matrix(distance_matrix_square)

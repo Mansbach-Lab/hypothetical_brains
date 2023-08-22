@@ -1,0 +1,70 @@
+
+
+Read me: summary of parameters for Y2023_M08_D17_H18_M15_S39
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.05
+Max number of voxels per cluster: 5
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 33.55
+
+
+Read me: summary of parameters for Y2023_M08_D17_H18_M19_S21
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.075
+Max number of voxels per cluster: 10
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 36.12
+
+
+Read me: summary of parameters for Y2023_M08_D17_H18_M21_S11
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.1
+Max number of voxels per cluster: 23
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 40.55
+
+Read me: summary of parameters for Y2023_M08_D17_H18_M23_S20
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.5
+Max number of voxels per cluster: 6345
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 2061.67
+
+Read me: summary of parameters for Y2023_M08_D17_H21_M09_S11
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.2
+Max number of voxels per cluster: 271
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 96.93
+
+
+Read me: summary of parameters for Y2023_M08_D17_H21_M12_S59
+Source file: /home/lwright/anaconda3/envs/networktoy/brain_aug17_features256.csv
+Samples: 256
+Total number of voxels: 359938
+Total number of features: 7
+Radius, r=0.3
+Max number of voxels per cluster: 1155
+Min number of voxels per cluster: 1
+Number of clusters = number of voxels by cKDTree definition
+Run time: 377.45

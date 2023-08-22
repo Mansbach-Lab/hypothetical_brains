@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+hypotheticalbrains/__init__.py
+hypotheticalbrains/due.py
+hypotheticalbrains/hypotheticalbrains.py
+hypotheticalbrains/version.py
+hypotheticalbrains/tests/__init__.py
+hypotheticalbrains/tests/test_hb.py
+shablona.egg-info/PKG-INFO
+shablona.egg-info/SOURCES.txt
+shablona.egg-info/dependency_links.txt
+shablona.egg-info/requires.txt
+shablona.egg-info/top_level.txt

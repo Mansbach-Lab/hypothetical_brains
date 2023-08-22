@@ -5,7 +5,7 @@ API
 Classes
 -------
 
-.. currentmodule:: shablona
+.. currentmodule:: hypotheticalbrains
 
 .. autosummary::
    :template: class.rst
