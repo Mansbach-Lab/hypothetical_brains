@@ -220,8 +220,8 @@ print(sq_weight.todense())
 print(loop_weights.todense())
 print(ckd_weight.todense())
 
-mem = max(memory_usage(proc=hb.loop_made_weights(mat1, width, weight_threshold)))
-print("Maximum memory used: {} MiB".format(mem))
+# mem = max(memory_usage(proc=hb.loop_made_weights(mat1, width, weight_threshold)))
+# print("Maximum memory used: {} MiB".format(mem))
 
-mem = max(memory_usage(proc=hb.loop_made_distance(mat1, width)))
-print("Maximum memory used: {} MiB".format(mem))
+# mem = max(memory_usage(proc=hb.loop_made_distance(mat1, width)))
+# print("Maximum memory used: {} MiB".format(mem))

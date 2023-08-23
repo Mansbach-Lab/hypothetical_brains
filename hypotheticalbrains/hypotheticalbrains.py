@@ -8,9 +8,19 @@ from .due import due, Doi
 from scipy.spatial.distance import pdist, squareform
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.spatial import cKDTree
-    
+
+import os.path as op
+from datetime import datetime
+from os import mkdir
+from os.path import join
+from time import perf_counter, time #time
+
+import nibabel as nb
+# import networkx as nx
+from sklearn.preprocessing import StandardScaler
+
+
 __all__ = [
-    "silly_function",
     
     "thresholding_weight",
     
@@ -24,6 +34,7 @@ __all__ = [
     
     "squareform_made_weights",
     "squareform_made_distance",
+    "generate_clusters",
     
     "Model", 
     "Fit", 
@@ -31,7 +42,7 @@ __all__ = [
     "transform_data", 
     "cumgauss"
     ]
-shablona = 42
+
 
 # Use duecredit (duecredit.org) to provide a citation to relevant work to
 # be cited. This does nothing, unless the user has duecredit installed,
@@ -39,7 +50,395 @@ shablona = 42
 due.cite(Doi("10.1167/13.9.30"),
          description="Template project for small scientific Python projects",
          tags=["reference-implementation"],
-         path='shablona')
+         path='hypotheticalbrains')
+
+
+
+
+def thresholding_weight(weight_matrix_flat, weight_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    weight_matrix_flat : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    weight_matrix_flat : TYPE
+        DESCRIPTION.
+
+    """
+    # myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
+
+    for i in range(len(weight_matrix_flat)):
+        if weight_matrix_flat[i] < weight_threshold:
+            weight_matrix_flat[i] = 0
+    return weight_matrix_flat
+
+# def thresholding_distance(distance_matrix_flat, distance_threshold):
+#     for i in range(len(distance_matrix_flat)):
+#         if distance_matrix_flat[i] > distance_threshold:
+#             distance_matrix_flat[i] = 1
+#     return distance_matrix_flat
+
+def ckd_made_weights(feature_mat_scaled, width, distance_threshold, weight_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+    distance_threshold : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    ckdtree_weight : TYPE
+        DESCRIPTION.
+
+    """
+    # method 1 for sparse matrix; does distance only, cannot make weights
+    kd_tree1 = cKDTree(feature_mat_scaled)
+    kd_tree2 = cKDTree(feature_mat_scaled)
+    ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
+    ckdtree_weight = ckdtree_distance.copy()
+    ckdtree_weight.data = thresholding_weight(np.exp(-1.*(ckdtree_distance.power(2)).data/width), weight_threshold)
+    ckdtree_weight.eliminate_zeros()
+    return ckdtree_weight
+
+def ckd_made_distance(feature_mat_scaled, width, distance_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+    distance_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    ckdtree_distance : TYPE
+        DESCRIPTION.
+
+    """
+    # method 1 for sparse matrix; does distance only, cannot make weights
+    kd_tree1 = cKDTree(feature_mat_scaled)
+    kd_tree2 = cKDTree(feature_mat_scaled)
+    ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
+    ckdtree_distance = ckdtree_distance.power(2)
+    ckdtree_distance.eliminate_zeros()
+    return ckdtree_distance
+
+    
+def loop_made_weights(feature_mat_scaled, width, weight_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
+    weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
+    
+    # pruning edges less than filter_threshold
+    filtered_weights = thresholding_weight(weight_matrix_flat, weight_threshold)
+
+    # collecting data
+    voxel_number=feature_mat_scaled.shape[0]
+    weights_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
+    
+    count = 0
+    for row in range(voxel_number-1):
+        
+        weights_sparse_lil[row, row] = 1.
+        
+        for col in range(row+1, voxel_number): 
+            
+            # for upper triangle elements
+            weights_sparse_lil[row, col] = (
+                filtered_weights[count])
+            
+            # to add lower triangular elements
+            weights_sparse_lil[col,row] = (
+                filtered_weights[count])
+
+            count += 1
+    weights_sparse_lil[feature_mat_scaled.shape[0]-1,feature_mat_scaled.shape[0]-1] = 1.0
+    return weights_sparse_lil.tocsr() 
+    
+def loop_made_distance(feature_mat_scaled, width):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
+
+    # collecting data; two different approaches lil_matrix or for direct to CSR
+    voxel_number=feature_mat_scaled.shape[0]
+    distances_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
+
+    count = 0
+    for row in range(voxel_number-1):
+        for col in range(row+1, voxel_number): 
+            
+            # for upper triangle elements
+            distances_sparse_lil[row, col] = (
+                distance_matrix_flat[count])
+            
+            # to add lower triangular elements
+            distances_sparse_lil[col,row] = (
+                distance_matrix_flat[count])
+            
+            count += 1
+     
+    return distances_sparse_lil.tocsr()
+
+# method 4 this bit takes too much memory for higher orders
+def squareform_made_weights(feature_mat_scaled, width, weight_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    sq_csr : TYPE
+        DESCRIPTION.
+
+    """
+    weight_matrix_square = squareform(
+        thresholding_weight(np.exp(-1.*pdist(feature_mat_scaled, 'sqeuclidean')/width),
+    weight_threshold))
+    sq_csr = csr_matrix(weight_matrix_square)
+    sq_csr.setdiag(1.0)
+    return sq_csr
+
+def squareform_made_distance(feature_mat_scaled):
+    """
+    
+
+    Parameters
+    ----------
+    feature_mat_scaled : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    weight_matrix_square = squareform(pdist(feature_mat_scaled, 'sqeuclidean'))
+    return csr_matrix(weight_matrix_square)
+
+def generate_feature_matrix(features_dir, stringname, samples, feature_number):
+    """
+    
+
+    Parameters
+    ----------
+    stringname : TYPE
+        DESCRIPTION.
+    samples : TYPE
+        DESCRIPTION.
+    feature_number : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+        
+    save_features_as = join(stringname+'features'+str(samples)+'.csv')
+    # WM_mask = nb.load(join(features_dir, 'WM_mask_'+str(samples)+'.nii')).get_fdata().astype('bool')
+    # AD = nb.load(join(features_dir, 'AD_'+str(samples)+'.nii')).get_fdata()
+    # FA = nb.load(join(features_dir, 'FA_'+str(samples)+'.nii')).get_fdata()
+    # MD = nb.load(join(features_dir, 'MD_'+str(samples)+'.nii')).get_fdata()
+    # RD = nb.load(join(features_dir, 'RD_'+str(samples)+'.nii')).get_fdata()
+    # ICVF = nb.load(join(features_dir, 'ICVF_'+str(samples)+'.nii')).get_fdata()
+    # OD = nb.load(join(features_dir, 'OD_'+str(samples)+'.nii')).get_fdata()
+    # ISOVF = nb.load(join(features_dir, 'ISOVF_'+str(samples)+'.nii')).get_fdata()
+    
+    AD = nb.load(join(features_dir,'sub-071_P_AD_WarpedToMNI.nii')).get_fdata()
+    FA = nb.load(join(features_dir,'sub-071_P_FA_WarpedToMNI.nii')).get_fdata()
+    MD = nb.load(join(features_dir,'sub-071_P_MD_WarpedToMNI.nii')).get_fdata()
+    RD = nb.load(join(features_dir,'sub-071_P_RD_WarpedToMNI.nii')).get_fdata()
+    ICVF = nb.load(join(features_dir,'sub-071_P_ICVF_WarpedToMNI.nii')).get_fdata()
+    OD = nb.load(join(features_dir,'sub-071_P_OD_WarpedToMNI.nii')).get_fdata()
+    ISOVF = nb.load(join(features_dir,'sub-071_P_ISOVF_WarpedToMNI.nii')).get_fdata()
+    WM_mask = nb.load(join(features_dir,'Group_mean_CIRM_57_ACTION_5_MPRAGE0p9_T1w_brain_reg2DWI_0p9_T1_5tt_vol2_WM_WarpedToMNI_thr0p95_bin.nii')).get_fdata().astype('bool')
+    
+    AD_WM = AD[WM_mask]
+    FA_WM = FA[WM_mask]
+    MD_WM = MD[WM_mask]
+    RD_WM = RD[WM_mask]
+    ICVF_WM = ICVF[WM_mask]
+    OD_WM = OD[WM_mask]
+    ISOVF_WM = ISOVF[WM_mask]
+    
+    voxel_number = AD_WM.shape[0]
+    
+    # Make array containing all features (voxels in WM X features)
+    feature_mat = np.zeros((voxel_number,feature_number))
+    
+    # Replace zeros in each column by the data of one of the metrics 
+    feature_mat[:,0] = AD_WM
+    feature_mat[:,1] = FA_WM
+    feature_mat[:,2] = MD_WM
+    feature_mat[:,3] = RD_WM
+    feature_mat[:,4] = ICVF_WM
+    feature_mat[:,5] = OD_WM
+    feature_mat[:,6] = ISOVF_WM
+        
+    # scaling the MRI feature data
+    scaler = StandardScaler()
+    scaler.fit(feature_mat)
+    feature_mat_scaled = scaler.transform(feature_mat)
+        
+    labeled_matrix = np.zeros((AD_WM.shape[0]+1,feature_number))
+    labeled_matrix[0,:] = np.arange(0,feature_number,1)
+    labeled_matrix[1::,:] = feature_mat_scaled
+    
+    np.savetxt(save_features_as,labeled_matrix, delimiter=",")
+    
+    return print("Attributes saved")
+
+
+def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
+    """
+    
+
+    Parameters
+    ----------
+    import_data_from : TYPE
+        DESCRIPTION.
+    samples : TYPE
+        DESCRIPTION.
+    r : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+        
+    voxelcount = len(feature_mat_scaled)
+    features = len(feature_mat_scaled[0])
+        
+    start_time = perf_counter()
+    now = datetime.now()
+    dt_string = now.strftime("HypoBrains_Y%Y_M%m_D%d_H%H_M%M_S%S")
+    mkdir(dt_string)
+    tree = cKDTree(feature_mat_scaled)
+    # mrRogers = []
+    maximum,minimum,average = 0, voxelcount, 0
+    
+    stats = np.zeros((voxelcount,features,2))
+    
+    for i in range(voxelcount):
+        neighbour_idx = np.array(cKDTree.query_ball_point(tree,feature_mat_scaled[i],r,p=2., 
+                        eps=0, workers=-1, return_sorted=True, return_length=False))
+        temp = len(neighbour_idx)
+        cluster = np.zeros((temp,features+1))
+        for j in range(temp):
+            cluster[j,0] = neighbour_idx[j]
+            cluster[j,1::] = feature_mat_scaled[neighbour_idx[j],:]
+        if maximum < temp:
+            maximum = temp
+        if minimum > temp:
+            minimum = temp
+        average += temp
+        stats[i,:,0]=np.mean(cluster[:,1::],axis=0)
+        stats[i,:,1]=np.std(cluster[:,1::],axis=0)
+    
+        # mrRogers.append(neighbour_idx)
+        
+        loc = join("./"+ dt_string+ "/cluster"+ str(i)+ ".txt")
+        np.savetxt(loc, cluster, delimiter=",")
+        print("time saved voxel ", str(i),"/", str(voxelcount), " : ", (perf_counter() - start_time))
+    
+    average/=voxelcount
+    time1 = perf_counter() - start_time
+    print("time 1: ", (perf_counter() - start_time))
+    
+    summary_notes = (  "Project HypoBrains"  
+                     + "\nRead me: summary of parameters for " +dt_string
+                     + "\nSource file: " +import_data_from
+                     + "\nSamples: "+str(samples)
+                     + "\nTotal number of voxels: " +str(voxelcount)
+                     + "\nTotal number of features: " +str(features)
+                     + "\nRadius, r="+str(r)
+                     + "\nMax number of voxels per cluster: "+str(maximum)
+                     + "\nMin number of voxels per cluster: "+str(minimum)
+                     + "\nAverage number of voxels per cluster: "+str(average)
+                     + "\nNumber of clusters = number of voxels by cKDTree definition"
+                     + "\nRun time: {:.2f}".format(time1)
+                     )
+    
+    loc_readme = join("./"+ dt_string+ "/"+str(dt_string)+"_readme.txt")
+    
+    readme = open(loc_readme, "w")
+    n = readme.write(summary_notes)
+    readme.close()
+    print(dt_string)
+    return minimum,maximum,average
+
+
+
+
+
+
+
+
+
+
 
 
 def transform_data(data):
@@ -152,119 +551,6 @@ def opt_err_func(params, x, y, func):
         The marginals of the fit to x/y given the params
     """
     return y - func(x, *params)
-
-
-
-def silly_function(a,b):
-    c = a+b
-    return c
-
-def thresholding_weight(weight_matrix_flat, weight_threshold):
-    # myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
-
-    for i in range(len(weight_matrix_flat)):
-        if weight_matrix_flat[i] < weight_threshold:
-            weight_matrix_flat[i] = 0
-    return weight_matrix_flat
-
-# def thresholding_distance(distance_matrix_flat, distance_threshold):
-#     for i in range(len(distance_matrix_flat)):
-#         if distance_matrix_flat[i] > distance_threshold:
-#             distance_matrix_flat[i] = 1
-#     return distance_matrix_flat
-
-def ckd_made_weights(feature_mat_scaled, width, distance_threshold, weight_threshold):
-    # method 1 for sparse matrix; does distance only, cannot make weights
-    kd_tree1 = cKDTree(feature_mat_scaled)
-    kd_tree2 = cKDTree(feature_mat_scaled)
-    ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
-    ckdtree_weight = ckdtree_distance.copy()
-    ckdtree_weight.data = thresholding_weight(np.exp(-1.*(ckdtree_distance.power(2)).data/width), weight_threshold)
-    ckdtree_weight.eliminate_zeros()
-    return ckdtree_weight
-
-def ckd_made_distance(feature_mat_scaled, width, distance_threshold):
-    # method 1 for sparse matrix; does distance only, cannot make weights
-    kd_tree1 = cKDTree(feature_mat_scaled)
-    kd_tree2 = cKDTree(feature_mat_scaled)
-    ckdtree_distance = kd_tree1.sparse_distance_matrix(kd_tree2, distance_threshold).tocsr()
-    ckdtree_distance = ckdtree_distance.power(2)
-    ckdtree_distance.eliminate_zeros()
-    return ckdtree_distance
-
-    
-def loop_made_weights(feature_mat_scaled, width, weight_threshold):
-    distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
-    weight_matrix_flat = np.exp(-1.*distance_matrix_flat/width)
-    
-    # pruning edges less than filter_threshold
-    filtered_weights = thresholding_weight(weight_matrix_flat, weight_threshold)
-
-    # collecting data
-    voxel_number=feature_mat_scaled.shape[0]
-    weights_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
-    
-    count = 0
-    for row in range(voxel_number-1):
-        
-        weights_sparse_lil[row, row] = 1.
-        
-        for col in range(row+1, voxel_number): 
-            
-            # for upper triangle elements
-            weights_sparse_lil[row, col] = (
-                filtered_weights[count])
-            
-            # to add lower triangular elements
-            weights_sparse_lil[col,row] = (
-                filtered_weights[count])
-
-            count += 1
-    weights_sparse_lil[feature_mat_scaled.shape[0]-1,feature_mat_scaled.shape[0]-1] = 1.0
-    return weights_sparse_lil.tocsr() 
-    
-def loop_made_distance(feature_mat_scaled, width):
-    distance_matrix_flat = pdist(feature_mat_scaled, 'sqeuclidean')
-
-    # collecting data; two different approaches lil_matrix or for direct to CSR
-    voxel_number=feature_mat_scaled.shape[0]
-    distances_sparse_lil = lil_matrix((voxel_number, voxel_number)) 
-
-    count = 0
-    for row in range(voxel_number-1):
-        for col in range(row+1, voxel_number): 
-            
-            # for upper triangle elements
-            distances_sparse_lil[row, col] = (
-                distance_matrix_flat[count])
-            
-            # to add lower triangular elements
-            distances_sparse_lil[col,row] = (
-                distance_matrix_flat[count])
-            
-            count += 1
-     
-    return distances_sparse_lil.tocsr()
-
-# method 4 this bit takes too much memory for higher orders
-def squareform_made_weights(feature_mat_scaled, width, weight_threshold):
-    weight_matrix_square = squareform(
-        thresholding_weight(np.exp(-1.*pdist(feature_mat_scaled, 'sqeuclidean')/width),
-    weight_threshold))
-    sq_csr = csr_matrix(weight_matrix_square)
-    sq_csr.setdiag(1.0)
-    return sq_csr
-
-def squareform_made_distance(feature_mat_scaled):
-    weight_matrix_square = squareform(pdist(feature_mat_scaled, 'sqeuclidean'))
-    return csr_matrix(weight_matrix_square)
-
-
-
-
-
-
-
 
 
 class Model(object):

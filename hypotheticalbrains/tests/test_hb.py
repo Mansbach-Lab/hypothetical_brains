@@ -6,13 +6,13 @@ import pandas as pd
 import numpy.testing as npt
 import hypotheticalbrains as hb
 
-from memory_profiler import profile, memory_usage
-import requests
+# from memory_profiler import profile, memory_usage
+# import requests
 
 data_path = op.join(hb.__path__[0], 'data')
 
 
-def test_dummy():
+def test_compare_distance_methods():
 
     # how many voxels are there per dimension of the MRI?
     samples = 20
@@ -33,11 +33,11 @@ def test_dummy():
     squareform_weights = hb.squareform_made_weights(feature_mat_scaled, width, weight_threshold)
     squareform_distances = hb.squareform_made_distance(feature_mat_scaled)
     
-    mem = max(memory_usage(proc=hb.squareform_made_weights(feature_mat_scaled, width, weight_threshold)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.squareform_made_weights(feature_mat_scaled, width, weight_threshold)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
-    mem = max(memory_usage(proc=hb.squareform_made_distance(feature_mat_scaled)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.squareform_made_distance(feature_mat_scaled)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
     
     #make matrix second way
@@ -45,22 +45,22 @@ def test_dummy():
     weights_sparse_csr = hb.loop_made_weights(feature_mat_scaled, width, weight_threshold) 
     distances_sparse_csr = hb.loop_made_distance(feature_mat_scaled, width)
     
-    mem = max(memory_usage(proc=hb.loop_made_weights(feature_mat_scaled, width, weight_threshold)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.loop_made_weights(feature_mat_scaled, width, weight_threshold)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
-    mem = max(memory_usage(proc=hb.loop_made_distance(feature_mat_scaled, width)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.loop_made_distance(feature_mat_scaled, width)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
     
     #make matrix third way
     ckdtree_weight = hb.ckd_made_weights(feature_mat_scaled, width, distance_threshold, weight_threshold)
     ckdtree_distance = hb.ckd_made_distance(feature_mat_scaled, width, distance_threshold)
         
-    mem = max(memory_usage(proc=hb.ckd_made_weights(feature_mat_scaled, width, distance_threshold, weight_threshold)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.ckd_made_weights(feature_mat_scaled, width, distance_threshold, weight_threshold)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
-    mem = max(memory_usage(proc=hb.ckd_made_distance(feature_mat_scaled, width, distance_threshold)))
-    print("Maximum memory used: {} MiB".format(mem))
+    # mem = max(memory_usage(proc=hb.ckd_made_distance(feature_mat_scaled, width, distance_threshold)))
+    # print("Maximum memory used: {} MiB".format(mem))
     
     
      
@@ -70,9 +70,12 @@ def test_dummy():
     # npt.assert_array_almost_equal(distances_sparse_csr.todense(), squareform_distances.todense())
     npt.assert_array_almost_equal(ckdtree_distance.todense(), distances_sparse_csr.todense())
 
+def test_generate_clusters():
+    
+    feature_mat_scaled, r = np.array([[0,0],[1,1],[4,4],[5,5]]), 3 # demo case
+    minimum,maximum,average = hb.generate_clusters(feature_mat_scaled, r)
+    if minimum ==2 and maximum ==2 and average ==2:
+        assert True
+    else:
+        assert False
 
-# def test_silly_function():
-#     a = 1
-#     b = 2
-#     c = hb.silly_function(a,b)
-#     assert(c==(a+b))

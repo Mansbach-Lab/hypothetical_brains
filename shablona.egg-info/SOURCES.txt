@@ -8,8 +8,8 @@ hypotheticalbrains/hypotheticalbrains.py
 hypotheticalbrains/version.py
 hypotheticalbrains/tests/__init__.py
 hypotheticalbrains/tests/test_hb.py
-shablona.egg-info/PKG-INFO
-shablona.egg-info/SOURCES.txt
-shablona.egg-info/dependency_links.txt
-shablona.egg-info/requires.txt
-shablona.egg-info/top_level.txt
+hypotheticalbrains.egg-info/PKG-INFO
+hypotheticalbrains.egg-info/SOURCES.txt
+hypotheticalbrains.egg-info/dependency_links.txt
+hypotheticalbrains.egg-info/requires.txt
+hypotheticalbrains.egg-info/top_level.txt

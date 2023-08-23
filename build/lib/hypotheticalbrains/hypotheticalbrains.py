@@ -21,7 +21,7 @@ __all__ = ["silly_function","Model", "Fit", "opt_err_func", "transform_data", "c
 due.cite(Doi("10.1167/13.9.30"),
          description="Template project for small scientific Python projects",
          tags=["reference-implementation"],
-         path='shablona')
+         path='hypotheticalbrains')
 
 def silly_function(a,b):
     c = a+b
