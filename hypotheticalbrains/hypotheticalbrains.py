@@ -35,6 +35,7 @@ __all__ = [
     "squareform_made_weights",
     "squareform_made_distance",
     "generate_clusters",
+    "generate_feature_matrix",
     
     "Model", 
     "Fit", 
@@ -374,7 +375,7 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         
     start_time = perf_counter()
     now = datetime.now()
-    dt_string = now.strftime("HypoBrains_Y%Y_M%m_D%d_H%H_M%M_S%S")
+    dt_string = now.strftime("/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_Y%Y_M%m_D%d_H%H_M%M_S%S")
     mkdir(dt_string)
     tree = cKDTree(feature_mat_scaled)
     # mrRogers = []
@@ -400,9 +401,14 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     
         # mrRogers.append(neighbour_idx)
         
-        loc = join("./"+ dt_string+ "/cluster"+ str(i)+ ".txt")
+        loc = join("./"+ dt_string+ "/cluster"+ str(i)+ ".csv")
         np.savetxt(loc, cluster, delimiter=",")
         print("time saved voxel ", str(i),"/", str(voxelcount), " : ", (perf_counter() - start_time))
+    
+    loc_means = join("./"+ dt_string+ "/means.csv")
+    loc_sd = join("./"+ dt_string+ "/sd.csv")
+    np.savetxt(loc_means, stats[:,:,0], delimiter=",")
+    np.savetxt(loc_sd, stats[:,:,1], delimiter=",")
     
     average/=voxelcount
     time1 = perf_counter() - start_time

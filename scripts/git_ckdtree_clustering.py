@@ -10,10 +10,10 @@ import hypotheticalbrains as hb
 import numpy as np
 
 # how many voxels are there per dimension of the MRI?
-samples = 20 # whole brain = 256
+samples = 256 # whole brain = 256
 
 # for importing and preparing features data
-stringname = 'brain_july26_features'
+stringname = 'brain_aug17_features'
 import_data_from = op.join('/home/lwright/anaconda3/envs/networktoy/' 
                                            + stringname + str(samples)+'.csv')
 data = np.loadtxt(import_data_from, delimiter=',')
