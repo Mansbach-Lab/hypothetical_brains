@@ -9,11 +9,11 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.spatial import cKDTree
 
-import os.path as op
+# import os.path as op
 from datetime import datetime
 from os import mkdir
 from os.path import join
-from time import perf_counter, time #time
+from time import perf_counter#, time #time
 
 import nibabel as nb
 # import networkx as nx
@@ -21,7 +21,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 __all__ = [
-    
+    "simple_function",
     "thresholding_weight",
     
 #    "thresholding_distance",
@@ -53,7 +53,9 @@ due.cite(Doi("10.1167/13.9.30"),
          tags=["reference-implementation"],
          path='hypotheticalbrains')
 
-
+def simple_function():
+    print("huzzah!")
+    return 42
 
 
 def thresholding_weight(weight_matrix_flat, weight_threshold):
@@ -375,7 +377,8 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         
     start_time = perf_counter()
     now = datetime.now()
-    dt_string = now.strftime("/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_Y%Y_M%m_D%d_H%H_M%M_S%S")
+    dateonly = now.strftime("Y%Y_M%m_D%d_H%H_M%M_S%S")
+    dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly
     mkdir(dt_string)
     tree = cKDTree(feature_mat_scaled)
     # mrRogers = []
@@ -401,12 +404,12 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     
         # mrRogers.append(neighbour_idx)
         
-        loc = join("./"+ dt_string+ "/cluster"+ str(i)+ ".csv")
+        loc = join(dt_string+ "/cluster"+ str(i)+ ".csv")
         np.savetxt(loc, cluster, delimiter=",")
         print("time saved voxel ", str(i),"/", str(voxelcount), " : ", (perf_counter() - start_time))
     
-    loc_means = join("./"+ dt_string+ "/means.csv")
-    loc_sd = join("./"+ dt_string+ "/sd.csv")
+    loc_means = join(dt_string+ "/means.csv")
+    loc_sd = join(dt_string+ "/sd.csv")
     np.savetxt(loc_means, stats[:,:,0], delimiter=",")
     np.savetxt(loc_sd, stats[:,:,1], delimiter=",")
     
@@ -428,7 +431,7 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
                      + "\nRun time: {:.2f}".format(time1)
                      )
     
-    loc_readme = join("./"+ dt_string+ "/"+str(dt_string)+"_readme.txt")
+    loc_readme = join(dt_string+ "/"+str(dateonly)+"_readme.txt")
     
     readme = open(loc_readme, "w")
     n = readme.write(summary_notes)

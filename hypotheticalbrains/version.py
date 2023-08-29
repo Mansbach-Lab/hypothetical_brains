@@ -26,9 +26,11 @@ CLASSIFIERS = ["Development Status :: 3 - Alpha",
                "Topic :: Scientific/Engineering"]
 
 # Description should be a one-liner:
-description = "hypotheticalbrains: a template for small scientific Python projects"
+description = "hypotheticalbrains: a package for investigating small neuroimaging datasets"
 # Long description will go up on the pypi page
-long_description = """
+long_description = "hypothetical brains is a packaged designed to transform neuroimaging data into graphical networks of voxels. It uses a clustering algorithm (cKDTree) to create subgraphs based on the similarity between pairs of voxels across several features. These clusters become subgraphs which are used to train a graphical neural network. The GNN is then used to augment the dataset. Finally, the augmented dataset may be analysed using topological techniques to identify commonalities among individual brains."
+
+"""
 
 Shablona
 ========
@@ -42,11 +44,11 @@ to use in other projects.
 To get started using these components in your own software, please go to the
 repository README_.
 
-.. _README: https://github.com/uwescience/hypotheticalbrains/blob/master/README.md
+.. _README: https://github.com/uwescience/shablona/blob/master/README.md
 
 License
 =======
-``hypotheticalbrains`` is licensed under the terms of the MIT license. See the file
+``shablona`` is licensed under the terms of the MIT license. See the file
 "LICENSE" for information on the history of this software, terms & conditions
 for usage, and a DISCLAIMER OF ALL WARRANTIES.
 
@@ -57,15 +59,15 @@ eScience Institute.
 """
 
 NAME = "hypotheticalbrains"
-MAINTAINER = "Ariel Rokem"
-MAINTAINER_EMAIL = "arokem@gmail.com"
+MAINTAINER = "Lindsay Wright"
+MAINTAINER_EMAIL = "lindsay.wright2@mail.mcgill.ca"
 DESCRIPTION = description
 LONG_DESCRIPTION = long_description
-URL = "http://github.com/uwescience/hypotheticalbrains"
+URL = "https://github.com/Mansbach-Lab/hypothetical_brains"
 DOWNLOAD_URL = ""
-LICENSE = "MIT"
-AUTHOR = "Ariel Rokem"
-AUTHOR_EMAIL = "arokem@gmail.com"
+LICENSE = "Concordia"
+AUTHOR = "Lindsay Wright, and _________"
+AUTHOR_EMAIL = "lindsay.wright2@mail.mcgill.ca"
 PLATFORMS = "OS Independent"
 MAJOR = _version_major
 MINOR = _version_minor

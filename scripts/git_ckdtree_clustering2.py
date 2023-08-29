@@ -5,10 +5,18 @@
 # from os.path import join
 # from time import perf_counter #time
 
+from __future__ import absolute_import, division, print_function
+print("1")
 import os.path as op
+# import hypotheticalbrains.hypotheticalbrains as hb
+# import hypotheticalbrains.version as vhb
+print("2")
 import hypotheticalbrains as hb
+print("3")
 # from .hypotheticalbrains import *
 import numpy as np
+import os
+# print("package version = ", vhb.__version__)
 
 # how many voxels are there per dimension of the MRI?
 samples = 256 # whole brain = 256
@@ -21,9 +29,10 @@ data = np.loadtxt(import_data_from, delimiter=',')
 feature_mat_scaled = data[1::,:]
 
 # maximum radius from central point in cluster
-r = 0.9
+r = 0.3
 
-
+# hb.simple_function()
+# input("continue? [ctrl+c to exit]")
 hb.generate_clusters(feature_mat_scaled, samples, r)
 
 
@@ -98,3 +107,4 @@ readme = open(loc_readme, "w")
 n = readme.write(summary_notes)
 readme.close()
 print(dt_string)"""
+
