@@ -6,23 +6,20 @@
 # from time import perf_counter #time
 
 from __future__ import absolute_import, division, print_function
-print("1")
 import os.path as op
 # import hypotheticalbrains.hypotheticalbrains as hb
 # import hypotheticalbrains.version as vhb
-print("2")
 import hypotheticalbrains as hb
-print("3")
 # from .hypotheticalbrains import *
 import numpy as np
-import os
+# import os
 # print("package version = ", vhb.__version__)
 
 # how many voxels are there per dimension of the MRI?
-samples = 256 # whole brain = 256
+samples = 20 # whole brain = 256
 
 # for importing and preparing features data
-stringname = 'brain_aug17_features'
+stringname = 'brain_july26_features' # 'brain_aug17_features'
 import_data_from = op.join('/home/lwright/anaconda3/envs/networktoy/' 
                                            + stringname + str(samples)+'.csv')
 data = np.loadtxt(import_data_from, delimiter=',')
