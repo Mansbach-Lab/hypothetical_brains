@@ -4,12 +4,14 @@ Created on Fri Sep  1 12:07:11 2023
 
 @author: lwright
 
-This code is to demonstrate my method of data file organisation. The clustering
+This code is to demonstrate my method of data file organisation. My clustering
 algorithm generates one csv file of data per cluster, up to 350 000 files.
 To keep them organised, I create a directory labeled with the project code and
-the run starttime, and save the output files to this directory. Additionally,
+the run start time, and save the output files to this directory. Additionally,
 two extra csv output files containing the run's cluster metrics are added. 
 Finally, a readme file containing important run parameters is saved to the directory.
+
+
 
 """
 
@@ -18,7 +20,7 @@ from scipy.spatial import cKDTree
 from datetime import datetime
 from os import mkdir
 from os.path import join
-from time import perf_counter#, time #time
+from time import perf_counter
 
 
 def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
@@ -80,8 +82,8 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         
         # collect the cluster (voxels, neighbour_idx+features)
         cluster = np.zeros((neighbour_count,features+1))
-        cluster[neighbour_idx,0] = neighbour_idx
-        cluster[neighbour_idx,1::] = feature_mat_scaled[neighbour_idx,:]
+        cluster[:,0] = neighbour_idx
+        cluster[:,1::] = feature_mat_scaled[neighbour_idx,:]
         
         # collecting cluster metrics                     
         if maximum < neighbour_count:

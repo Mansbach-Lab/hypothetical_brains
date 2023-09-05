@@ -412,8 +412,8 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         
         # collect the cluster (voxels, neighbour_idx+features)
         cluster = np.zeros((neighbour_count,features+1))
-        cluster[neighbour_idx,0] = neighbour_idx
-        cluster[neighbour_idx,1::] = feature_mat_scaled[neighbour_idx,:]
+        cluster[:,0] = neighbour_idx
+        cluster[:,1::] = feature_mat_scaled[neighbour_idx,:]
         
         # collecting cluster metrics                     
         if maximum < neighbour_count:
