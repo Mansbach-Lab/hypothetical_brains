@@ -3,7 +3,9 @@ README.md
 pyproject.toml
 setup.py
 hypotheticalbrains/__init__.py
+hypotheticalbrains/demo_indexing.py
 hypotheticalbrains/due.py
+hypotheticalbrains/example_file_organisation.py
 hypotheticalbrains/hypotheticalbrains.py
 hypotheticalbrains/untitled0.py
 hypotheticalbrains/version.py

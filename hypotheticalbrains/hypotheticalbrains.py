@@ -18,6 +18,7 @@ from time import perf_counter#, time #time
 import nibabel as nb
 # import networkx as nx
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
 
 
 __all__ = [
@@ -36,6 +37,7 @@ __all__ = [
     "squareform_made_distance",
     "generate_clusters",
     "generate_feature_matrix",
+    "meanogram",
     
     "Model", 
     "Fit", 
@@ -429,12 +431,15 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         np.savetxt(loc, cluster, delimiter=",")
         print("time saved voxel ", str(i),"/", str(voxel_count), " : ", 
                                           (perf_counter() - start_time))
+        
     
     # saving the run's cluster metrics
     loc_means = join(dt_string+ "/means.csv")
     loc_sd = join(dt_string+ "/sd.csv")
     np.savetxt(loc_means, stats[:,:,0], delimiter=",")
     np.savetxt(loc_sd, stats[:,:,1], delimiter=",")
+    plt.hist(stats[:,:,1], bins=100000, range=None, density=None, weights=None)
+    plt.savefig(join(dt_string+ "/histogram.png"))
     
     # calculate average cluster size
     average/=voxel_count
@@ -465,7 +470,15 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     print(dt_string)
     return minimum,maximum,average
 
-
+def meanogram(stats, metric):
+    means = stats[:,metric]
+    voxelcount = len(means)
+    plt.hist(means, bins='auto')  # arguments are passed to np.histogram
+    title_string = "Metric " + metric + " histogram with 'auto' bins"
+    plt.title(title_string)
+    save_string = "histogram_vox"+voxelcount +"_metr"+metric+".png"
+    plt.savefig(save_string)
+    plt.show()
 
 
 

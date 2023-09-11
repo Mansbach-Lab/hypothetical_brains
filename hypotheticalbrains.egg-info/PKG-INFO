@@ -1,14 +1,14 @@
 Metadata-Version: 2.1
 Name: hypotheticalbrains
 Version: 0.1.dev0
-Summary: hypotheticalbrains: a template for small scientific Python projects
-Home-page: http://github.com/uwescience/hypotheticalbrains
+Summary: hypotheticalbrains: a package for investigating small neuroimaging datasets
+Home-page: https://github.com/Mansbach-Lab/hypothetical_brains
 Download-URL: 
-Author: Ariel Rokem
-Author-email: arokem@gmail.com
-Maintainer: Ariel Rokem
-Maintainer-email: arokem@gmail.com
-License: MIT
+Author: Lindsay Wright, and _________
+Author-email: lindsay.wright2@mail.mcgill.ca
+Maintainer: Lindsay Wright
+Maintainer-email: lindsay.wright2@mail.mcgill.ca
+License: Concordia
 Platform: OS Independent
 Classifier: Development Status :: 3 - Alpha
 Classifier: Environment :: Console
@@ -21,29 +21,4 @@ Requires: numpy
 Requires-Python: >= 3.5
 License-File: LICENSE
 
-
-
-Shablona
-========
-Shablona is a template project for small scientific Python projects.
-
-It contains software implementations of an analysis of some simple data, but
-more importantly, it contains infrastructure for testing, documentation,
-continuous integration and deployment, which can be easily adapted
-to use in other projects.
-
-To get started using these components in your own software, please go to the
-repository README_.
-
-.. _README: https://github.com/uwescience/hypotheticalbrains/blob/master/README.md
-
-License
-=======
-``hypotheticalbrains`` is licensed under the terms of the MIT license. See the file
-"LICENSE" for information on the history of this software, terms & conditions
-for usage, and a DISCLAIMER OF ALL WARRANTIES.
-
-All trademarks referenced herein are property of their respective holders.
-
-Copyright (c) 2015--, Ariel Rokem, The University of Washington
-eScience Institute.
+hypothetical brains is a packaged designed to transform neuroimaging data into graphical networks of voxels. It uses a clustering algorithm (cKDTree) to create subgraphs based on the similarity between pairs of voxels across several features. These clusters become subgraphs which are used to train a graphical neural network. The GNN is then used to augment the dataset. Finally, the augmented dataset may be analysed using topological techniques to identify commonalities among individual brains.
