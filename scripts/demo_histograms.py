@@ -28,10 +28,10 @@ def meanogram(stats, metric):
     plt.show()
 
 
-import_from = '/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_Y2023_M09_D11_H16_M44_S51/means.csv'
+import_from = '/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_Y2023_M09_D12_H12_M15_S54/means.csv'
 stats = np.loadtxt(import_from, delimiter=',')
 
-meanogram(stats, 1)
+meanogram(stats, 1, 100)
 
 
 

@@ -390,7 +390,7 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     # creating a directory labeled with project name and start date+time of run
     now = datetime.now()
     dateonly = now.strftime("Y%Y_M%m_D%d_H%H_M%M_S%S")
-    dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly
+    dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly + "_v" + str(voxel_count) + "_r" + str(r)
     mkdir(dt_string)
     
     # create the tree from which the neighbours can be found
@@ -438,8 +438,8 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     loc_sd = join(dt_string+ "/sd.csv")
     np.savetxt(loc_means, stats[:,:,0], delimiter=",")
     np.savetxt(loc_sd, stats[:,:,1], delimiter=",")
-    plt.hist(stats[:,:,1], bins=100000, range=None, density=None, weights=None)
-    plt.savefig(join(dt_string+ "/histogram.png"))
+    # plt.hist(stats[:,:,1], bins=100000, range=None, density=None, weights=None)
+    # plt.savefig(join(dt_string+ "/histogram.png"))
     
     # calculate average cluster size
     average/=voxel_count
@@ -470,13 +470,13 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
     print(dt_string)
     return minimum,maximum,average
 
-def meanogram(stats, metric):
+def meanogram(stats, metric, bincount, directory):
     means = stats[:,metric]
     voxelcount = len(means)
-    plt.hist(means, bins='auto')  # arguments are passed to np.histogram
-    title_string = "Metric " + metric + " histogram with 'auto' bins"
+    plt.hist(means, bins=bincount)  # arguments are passed to np.histogram
+    title_string = "Histogram of Means for metric=" + str(metric) + ", voxels=" + str(voxelcount) + ", bins=" + str(bincount)
     plt.title(title_string)
-    save_string = "histogram_vox"+voxelcount +"_metr"+metric+".png"
+    save_string = directory +"histogram_vox"+ str(voxelcount) + "_metr" + str(metric) + "bins" + str(bincount) + ".png"
     plt.savefig(save_string)
     plt.show()
 
