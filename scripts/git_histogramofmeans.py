@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 # import os.path as op
 import hypotheticalbrains as hb
 import numpy as np
+import pyemma.plots as pyplot
 
 directory = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_Y2023_M09_D12_H13_M30_S53_v359938_r0.3/"
 import_from = directory + 'means.csv'
@@ -18,3 +19,7 @@ features = len(stats[0])
 for i in range(features):
     print(i)
     hb.meanogram(stats, i, 1000, directory)
+    
+# can I do x values = means, y values = 1, then bin using pyemma?
+
+pyplot.plot_free_energy(stats, np.ones(stats.shape), nbins=100)
