@@ -20,6 +20,4 @@ for i in range(features):
     print(i)
     hb.meanogram(stats, i, 1000, directory)
     
-# can I do x values = means, y values = 1, then bin using pyemma?
-
-pyplot.plot_free_energy(stats, np.ones(stats.shape), nbins=100)
+hb.free_energy_surface_allfeatures(stats, vmin=0, vmax=10, nbins=100, border = 1)
