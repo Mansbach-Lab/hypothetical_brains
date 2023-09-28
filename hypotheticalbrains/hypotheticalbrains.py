@@ -484,13 +484,14 @@ def meanogram(stats, metric, bincount, directory):
     plt.savefig(save_string)
     plt.show()
     
-def free_energy_surface_allfeatures(stats, vmin=0, vmax=10, nbins=100, border = 1):
+def free_energy_surface_allfeatures(stats, directory, vmin=0, vmax=10, nbins=100, border = 1):
     
     # vmin=0
     # vmax=6
     # nbins=1000
     # border = 1
     features = len(stats[0,:])
+    voxelcount = len(stats[:,0])
 
     font = {'size'   : 6}
     
@@ -526,10 +527,12 @@ def free_energy_surface_allfeatures(stats, vmin=0, vmax=10, nbins=100, border = 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.05, 0.7])
     fig.colorbar(im, cax=cbar_ax)
     plt.rc('font', **font)
+
+    title_string = directory + " nbins=" + str(nbins) + " vmin=" + str(vmin) + " vmax=" + str(vmax)
+    plt.title(title_string)
+    save_string = directory +"FES_vox"+ str(voxelcount) + "_nbins" + str(nbins) + " _vmin" + str(vmin) + "_vmax" + str(vmax) + ".png"
+    plt.savefig(save_string)
     plt.show()
-
-
-
 
 
 
