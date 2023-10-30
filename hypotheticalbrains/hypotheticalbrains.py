@@ -20,6 +20,7 @@ import nibabel as nb
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
+import networkx as nx
 import pyemma.plots as pyemmaplots
 
 
@@ -38,6 +39,7 @@ __all__ = [
     
     "squareform_made_weights",
     "squareform_made_distance",
+    "distance_to_adjacency",
     "generate_clusters",
     "generate_feature_matrix",
     "meanogram",
@@ -87,6 +89,32 @@ def thresholding_weight(weight_matrix_flat, weight_threshold):
         if weight_matrix_flat[i] < weight_threshold:
             weight_matrix_flat[i] = 0
     return weight_matrix_flat
+
+def thresholding_weight_2(weight_matrix_flat, weight_threshold):
+    """
+    
+
+    Parameters
+    ----------
+    weight_matrix_flat : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    weight_matrix_flat : TYPE
+        DESCRIPTION.
+
+    """
+    # myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
+    voxel_count = len(weight_matrix_flat[0])
+    for i in range(voxel_count):
+        for j in range(voxel_count):
+            if weight_matrix_flat[i,j] < weight_threshold:
+                weight_matrix_flat[i,j] = 0
+    return weight_matrix_flat
+
 
 # def thresholding_distance(distance_matrix_flat, distance_threshold):
 #     for i in range(len(distance_matrix_flat)):
@@ -266,6 +294,7 @@ def squareform_made_weights(feature_mat_scaled, width, weight_threshold):
     sq_csr.setdiag(1.0)
     return sq_csr
 
+
 def squareform_made_distance(feature_mat_scaled):
     """
     
@@ -283,6 +312,33 @@ def squareform_made_distance(feature_mat_scaled):
     """
     weight_matrix_square = squareform(pdist(feature_mat_scaled, 'sqeuclidean'))
     return csr_matrix(weight_matrix_square)
+
+
+def distance_to_adjacency(distance_matrix, width, weight_threshold):
+    """
+    
+    Parameters
+    ----------
+    distance_matrix : TYPE
+        DESCRIPTION.
+    width : TYPE
+        DESCRIPTION.
+    weight_threshold : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    sq_csr : TYPE
+        DESCRIPTION.
+
+    """
+    distance_matrix_dense = distance_matrix.todense() 
+    ## BANANA is there a way to do these operations on sparse instead of dense?
+    weight_matrix_square = thresholding_weight_2(np.exp(distance_matrix_dense/width*-1.), weight_threshold)
+    sq_csr = csr_matrix(weight_matrix_square)
+    sq_csr.setdiag(1.0)
+    return sq_csr
+
 
 def generate_feature_matrix(features_dir, stringname, samples, feature_number):
     """
@@ -359,7 +415,7 @@ def generate_feature_matrix(features_dir, stringname, samples, feature_number):
     return print("Attributes saved")
 
 
-def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
+def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=0, import_data_from=''):
     """
     
     Parameters
@@ -420,6 +476,15 @@ def generate_clusters(feature_mat_scaled, r, samples=0, import_data_from=''):
         cluster = np.zeros((neighbour_count,features+1))
         cluster[:,0] = neighbour_idx
         cluster[:,1::] = feature_mat_scaled[neighbour_idx,:]
+        # I want neighbour_idx to be the node labels - use dictionary?
+        # I want feature_mat_scaled[neighbour_idx,:] to be node attributes
+        max_distance = 10000
+        tree2 = cKDTree(feature_mat_scaled[neighbour_idx,:])
+        distance_matrix = cKDTree.sparse_distance_matrix(tree2, tree2, max_distance)    
+        adj = distance_to_adjacency(distance_matrix, width, weight_threshold) ## here
+        brain = nx.from_scipy_sparse_array(adj)
+        saveas = dt_string + "/cluster" + str(i) + ".gexf"
+        nx.write_gexf(brain, saveas)
         
         # collecting cluster metrics                     
         if maximum < neighbour_count:
@@ -494,13 +559,13 @@ def free_energy_surface_allfeatures(stats, directory, vmin=0, vmax=10, nbins=100
     voxelcount = len(stats[:,0])
 
     font = {'size'   : 6}
-    
+    plt.rc('font', **font)
     fig1,ax1 = plt.subplots(nrows=1, ncols=1)
     im = ax1.imshow(np.array([[0.1,vmax],[vmax/4.,0.1]]), vmin=vmin, vmax=vmax, cmap='nipy_spectral')
     cbar_ax = fig1.add_axes([0.85, 0.15, 0.05, 0.7])
     fig1.colorbar(im, cax=cbar_ax)
     
-    fig, axes = plt.subplots(features-1, features, sharex=True, sharey=True)
+    fig, axes = plt.subplots(features-1, features, figsize=(24.0, 12.0), sharex=True, sharey=True)
     for i in range(features): # i = x axis variable
         a = 0 # a = y axis variable
         for j in range(features):
@@ -520,19 +585,24 @@ def free_energy_surface_allfeatures(stats, directory, vmin=0, vmax=10, nbins=100
                                      max(stats[:,j])+border)#spany/nbins)
     
     # set xticks, xtick labels - missing
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.98,bottom=0.042,left=0.024,
-                        right=0.9,hspace=0.169,wspace=0.096)
+
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.92, 0.15, 0.05, 0.7])
     fig.colorbar(im, cax=cbar_ax)
     plt.rc('font', **font)
 
+    # plt.tight_layout()
+    plt.subplots_adjust(top=0.96,bottom=0.042,left=0.028,
+                        right=0.91,hspace=0.169,wspace=0.11)
     title_string = directory + " nbins=" + str(nbins) + " vmin=" + str(vmin) + " vmax=" + str(vmax)
-    plt.title(title_string)
-    save_string = directory +"FES_vox"+ str(voxelcount) + "_nbins" + str(nbins) + " _vmin" + str(vmin) + "_vmax" + str(vmax) + ".png"
+    fig.suptitle(title_string)    
+    save_string = directory +"FES_vox"+ str(voxelcount) + "_nbins" + str(nbins) + "_vmin" + str(vmin) + "_vmax" + str(vmax) + ".png"
     plt.savefig(save_string)
     plt.show()
+
+
+
+
 
 
 

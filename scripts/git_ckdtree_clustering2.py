@@ -29,5 +29,6 @@ r = 0.3
 # hb.simple_function()
 # input("continue? [ctrl+c to exit]")
 
-hb.generate_clusters(feature_mat_scaled, r, samples)
-
+# hb.generate_clusters(feature_mat_scaled, r, samples)
+weight_threshold = 0.1
+hb.generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=0, import_data_from='')
