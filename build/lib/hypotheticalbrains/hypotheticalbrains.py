@@ -332,7 +332,8 @@ def distance_to_adjacency(distance_matrix, width, weight_threshold):
         DESCRIPTION.
 
     """
-    distance_matrix_dense = distance_matrix.todense()
+    distance_matrix_dense = distance_matrix.todense() 
+    ## BANANA is there a way to do these operations on sparse instead of dense?
     weight_matrix_square = thresholding_weight_2(np.exp(distance_matrix_dense/width*-1.), weight_threshold)
     sq_csr = csr_matrix(weight_matrix_square)
     sq_csr.setdiag(1.0)
@@ -451,6 +452,9 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
     dateonly = now.strftime("Y%Y_M%m_D%d_H%H_M%M_S%S")
     dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly + "_v" + str(voxel_count) + "_r" + str(r)
     mkdir(dt_string)
+    nxdir = dt_string + "/gexf"
+    mkdir(nxdir)
+
     
     # create the tree from which the neighbours can be found
     tree = cKDTree(feature_mat_scaled)
@@ -482,8 +486,8 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
         distance_matrix = cKDTree.sparse_distance_matrix(tree2, tree2, max_distance)    
         adj = distance_to_adjacency(distance_matrix, width, weight_threshold) ## here
         brain = nx.from_scipy_sparse_array(adj)
-
-        saveas = dt_string + "cluster" + str(i) + ".gexf"
+        
+        saveas = nxdir + "/cluster" + str(i) + ".gexf"
         nx.write_gexf(brain, saveas)
         
         # collecting cluster metrics                     

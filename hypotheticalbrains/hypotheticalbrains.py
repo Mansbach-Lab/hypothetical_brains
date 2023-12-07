@@ -453,6 +453,12 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
     dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly + "_v" + str(voxel_count) + "_r" + str(r)
     mkdir(dt_string)
     
+    nxdir = dt_string + "/gexf"
+    mkdir(nxdir)
+
+    csvdir = dt_string + "/csv"
+    mkdir(csvdir)
+    
     # create the tree from which the neighbours can be found
     tree = cKDTree(feature_mat_scaled)
     
@@ -483,7 +489,8 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
         distance_matrix = cKDTree.sparse_distance_matrix(tree2, tree2, max_distance)    
         adj = distance_to_adjacency(distance_matrix, width, weight_threshold) ## here
         brain = nx.from_scipy_sparse_array(adj)
-        saveas = dt_string + "/cluster" + str(i) + ".gexf"
+        
+        saveas = nxdir + "/cluster" + str(i) + ".gexf"
         nx.write_gexf(brain, saveas)
         
         # collecting cluster metrics                     
@@ -496,7 +503,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
         stats[i,:,1]=np.std(cluster[:,1::],axis=0)
             
         # create a csv file containing cluster data, save to run directory
-        loc = join(dt_string+ "/cluster"+ str(i)+ ".csv")
+        loc = join(csvdir + "/cluster"+ str(i)+ ".csv")
         np.savetxt(loc, cluster, delimiter=",")
         print("time saved voxel ", str(i),"/", str(voxel_count), " : ", 
                                           (perf_counter() - start_time))
