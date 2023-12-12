@@ -488,10 +488,13 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
         tree2 = cKDTree(feature_mat_scaled[neighbour_idx,:])
         distance_matrix = cKDTree.sparse_distance_matrix(tree2, tree2, max_distance)    
         adj = distance_to_adjacency(distance_matrix, width, weight_threshold) ## here
-        brain = nx.from_scipy_sparse_array(adj)
         
-        saveas = nxdir + "/cluster" + str(i) + ".gexf"
-        nx.write_gexf(brain, saveas)
+        loc = join(csvdir + "/cluster"+ str(i)+ "adjmat.csv")
+        np.savetxt(loc, adj, delimiter=",")
+        
+        # brain = nx.from_scipy_sparse_array(adj)
+        # saveas = nxdir + "/cluster" + str(i) + ".gexf"
+        # nx.write_gexf(brain, saveas)
         
         # collecting cluster metrics                     
         if maximum < neighbour_count:
