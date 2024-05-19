@@ -319,17 +319,20 @@ def distance_to_adjacency(distance_matrix, width, weight_threshold):
     
     Parameters
     ----------
-    distance_matrix : TYPE
-        DESCRIPTION.
-    width : TYPE
-        DESCRIPTION.
-    weight_threshold : TYPE
-        DESCRIPTION.
+    distance_matrix : sparse matrix
+        Sparse matrix of distances between voxels in a given cluster.
+        
+    width : float
+        Gaussian smoothing parameter, or bandwidth.
+        
+    weight_threshold : float
+        minimum weight of edge between two voxels;
+        edges below this value will be pruned.
 
     Returns
     -------
-    sq_csr : TYPE
-        DESCRIPTION.
+    sq_csr : Compressed Sparse Row matrix
+        adjacency matrix, providing the weights of the edges between voxels.
 
     """
     distance_matrix_dense = distance_matrix.todense() 
@@ -346,17 +349,24 @@ def generate_feature_matrix(features_dir, stringname, samples, feature_number):
 
     Parameters
     ----------
-    stringname : TYPE
-        DESCRIPTION.
-    samples : TYPE
-        DESCRIPTION.
-    feature_number : TYPE
-        DESCRIPTION.
+    features_dir : str
+        directory where brain MRI nii files are stored.
+    
+    stringname : str
+        Save file descriptive string name, 
+        example: 'brain_july26_features'.
+        
+    samples : int
+        Dimensions of brain MRI in voxels, e.g. 256x256x256 and sample = 256.
+        
+    feature_number : int
+        Expected number of features per voxel; default 7
+        note that if >default, generate_feature_matrix will need to be
+        altered to include the additional features.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    NONE.
 
     """
         
@@ -415,21 +425,31 @@ def generate_feature_matrix(features_dir, stringname, samples, feature_number):
     return print("Attributes saved")
 
 
-def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=0, import_data_from=''):
+def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples=0, import_data_from=''):
     """
     
     Parameters
     ----------
     
-    import_data_from : str
-        Path to csv file containing (voxel, feature) sacled matrix brain MRI data.
+    feature_mat_scaled : array (voxels+1, features)
+        matrix of voxel features including feature labels in row 0 .
+ 
+    r : float
+        Maximum radius for inclusion in nearest neighbour cluster
+        as calculated in featurespace, euclidean distance.
+        
+    weight_threshold : float
+        minimum weight of edge between two voxels;
+        edges below this value will be pruned.
+        
+    width : float
+        Gaussian smoothing parameter, or bandwidth.
         
     samples : int
         Dimensions of brain MRI in voxels, e.g. 256x256x256 and sample = 256.
         
-    r : float
-        Maximum radius for inclusion in nearest neighbour cluster
-        as calculated in featurespace, euclidean distance.
+    import_data_from : str
+        Path to csv file containing (voxel, feature) sacled matrix brain MRI data.
 
     Returns
     -------
@@ -439,6 +459,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1, samples=
         in any given cluster of a single brain.
 
     """
+    feature_mat_scaled = feature_mat_scaled[1::,:] ### BANANA I hope adding this was ok? remove labels, updated mar 18 2024
     
     # how many voxels total, how many features per voxel    
     voxel_count = len(feature_mat_scaled)
