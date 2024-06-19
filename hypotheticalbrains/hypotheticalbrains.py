@@ -431,8 +431,8 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     Parameters
     ----------
     
-    feature_mat_scaled : array (voxels, features)
-        matrix of voxel features including feature labels in row 0 .
+    feature_mat_scaled : array (voxels x features)
+        matrix of voxel features.
  
     r : float
         Maximum radius for inclusion in nearest neighbour cluster
