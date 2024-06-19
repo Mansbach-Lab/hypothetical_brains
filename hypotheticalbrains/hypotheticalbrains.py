@@ -108,9 +108,9 @@ def thresholding_weight_2(weight_matrix_flat, weight_threshold):
 
     """
     # myfunc = np.vectorize(lambda a : 0.0 if (a < filter_threshold) else a)
-    voxel_count = len(weight_matrix_flat[0])
-    for i in range(voxel_count):
-        for j in range(voxel_count):
+    voxel_number = len(weight_matrix_flat[0])
+    for i in range(voxel_number):
+        for j in range(voxel_number):
             if weight_matrix_flat[i,j] < weight_threshold:
                 weight_matrix_flat[i,j] = 0
     return weight_matrix_flat
@@ -431,7 +431,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     Parameters
     ----------
     
-    feature_mat_scaled : array (voxels+1, features)
+    feature_mat_scaled : array (voxels, features)
         matrix of voxel features including feature labels in row 0 .
  
     r : float
@@ -459,10 +459,9 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
         in any given cluster of a single brain.
 
     """
-    feature_mat_scaled = feature_mat_scaled[1::,:] ### BANANA I hope adding this was ok? remove labels, updated mar 18 2024
     
     # how many voxels total, how many features per voxel    
-    voxel_count = len(feature_mat_scaled)
+    voxel_number = len(feature_mat_scaled)
     features = len(feature_mat_scaled[0])
     
     # run time, start stopwatch    
@@ -471,7 +470,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     # creating a directory labeled with project name and start date+time of run
     now = datetime.now()
     dateonly = now.strftime("Y%Y_M%m_D%d_H%H_M%M_S%S")
-    dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly + "_v" + str(voxel_count) + "_r" + str(r)
+    dt_string = "/home/lwright/anaconda3/envs/networktoy/output/HypoBrains_" + dateonly + "_v" + str(voxel_number) + "_r" + str(r)
     mkdir(dt_string)
     
     nxdir = dt_string + "/gexf"
@@ -484,11 +483,11 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     tree = cKDTree(feature_mat_scaled)
     
     # variables to collect cluster metrics
-    maximum,minimum,average = 0, voxel_count, 0
-    stats = np.zeros((voxel_count,features,2))
+    maximum,minimum,average = 0, voxel_number, 0
+    stats = np.zeros((voxel_number,features,2))
     
     # find the nearest neighbours of each voxel in the brain
-    for i in range(voxel_count):
+    for i in range(voxel_number):
         
         # gives the indices in feature_mat_scaled of all nearest neighbours to voxel i
         neighbour_idx = np.array(cKDTree.query_ball_point(tree,
@@ -529,7 +528,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
         # create a csv file containing cluster data, save to run directory
         loc = join(csvdir + "/cluster"+ str(i)+ ".csv")
         np.savetxt(loc, cluster, delimiter=",")
-        print("time saved voxel ", str(i),"/", str(voxel_count), " : ", 
+        print("time saved voxel ", str(i),"/", str(voxel_number), " : ", 
                                           (perf_counter() - start_time))
         
     
@@ -542,7 +541,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     # plt.savefig(join(dt_string+ "/histogram.png"))
     
     # calculate average cluster size
-    average/=voxel_count
+    average/=voxel_number
     
     #final runtime
     runtime = perf_counter() - start_time 
@@ -553,7 +552,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
                      + "\nRead me: summary of parameters for " +dt_string
                      + "\nSource file: " +import_data_from
                      + "\nSamples: "+str(samples)
-                     + "\nTotal number of voxels: " +str(voxel_count)
+                     + "\nTotal number of voxels: " +str(voxel_number)
                      + "\nTotal number of features: " +str(features)
                      + "\nRadius, r="+str(r)
                      + "\nMax number of voxels per cluster: "+str(maximum)
