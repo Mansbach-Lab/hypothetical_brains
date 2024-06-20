@@ -462,7 +462,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     
     # how many voxels total, how many features per voxel    
     voxel_number = len(feature_mat_scaled)
-    features = len(feature_mat_scaled[0])
+    feature_number = len(feature_mat_scaled[0])
     
     # run time, start stopwatch    
     start_time = perf_counter()
@@ -484,7 +484,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
     
     # variables to collect cluster metrics
     maximum,minimum,average = 0, voxel_number, 0
-    stats = np.zeros((voxel_number,features,2))
+    stats = np.zeros((voxel_number,feature_number,2))
     
     # find the nearest neighbours of each voxel in the brain
     for i in range(voxel_number):
@@ -499,7 +499,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
         neighbour_count = len(neighbour_idx)
         
         # collect the cluster (voxels, neighbour_idx+features)
-        cluster = np.zeros((neighbour_count,features+1))
+        cluster = np.zeros((neighbour_count,feature_number+1))
         cluster[:,0] = neighbour_idx
         cluster[:,1::] = feature_mat_scaled[neighbour_idx,:]
         # I want neighbour_idx to be the node labels - use dictionary?
@@ -553,7 +553,7 @@ def generate_clusters(feature_mat_scaled, r, weight_threshold, width=1., samples
                      + "\nSource file: " +import_data_from
                      + "\nSamples: "+str(samples)
                      + "\nTotal number of voxels: " +str(voxel_number)
-                     + "\nTotal number of features: " +str(features)
+                     + "\nTotal number of features: " +str(feature_number)
                      + "\nRadius, r="+str(r)
                      + "\nMax number of voxels per cluster: "+str(maximum)
                      + "\nMin number of voxels per cluster: "+str(minimum)
@@ -585,7 +585,7 @@ def free_energy_surface_allfeatures(stats, directory, vmin=0, vmax=10, nbins=100
     # vmax=6
     # nbins=1000
     # border = 1
-    features = len(stats[0,:])
+    feature_number = len(stats[0,:])
     voxelcount = len(stats[:,0])
 
     font = {'size'   : 6}
@@ -595,10 +595,10 @@ def free_energy_surface_allfeatures(stats, directory, vmin=0, vmax=10, nbins=100
     cbar_ax = fig1.add_axes([0.85, 0.15, 0.05, 0.7])
     fig1.colorbar(im, cax=cbar_ax)
     
-    fig, axes = plt.subplots(features-1, features, figsize=(24.0, 12.0), sharex=True, sharey=True)
-    for i in range(features): # i = x axis variable
+    fig, axes = plt.subplots(feature_number-1, feature_number, figsize=(24.0, 12.0), sharex=True, sharey=True)
+    for i in range(feature_number): # i = x axis variable
         a = 0 # a = y axis variable
-        for j in range(features):
+        for j in range(feature_number):
             if i==j:
                 a = 1
             else:
