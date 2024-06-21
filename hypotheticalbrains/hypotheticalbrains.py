@@ -337,7 +337,7 @@ def distance_to_adjacency(distance_matrix, width, weight_threshold):
     """
     distance_matrix_dense = distance_matrix.todense() 
     ## BANANA is there a way to do these operations on sparse instead of dense?
-    weight_matrix_square = thresholding_weight_2(np.exp(distance_matrix_dense/width*-1.), weight_threshold)
+    weight_matrix_square = thresholding_weight_2(np.exp(np.square(distance_matrix_dense)/width*-1.), weight_threshold)
     sq_csr = csr_matrix(weight_matrix_square)
     sq_csr.setdiag(1.0)
     return sq_csr
